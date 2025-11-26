@@ -33,7 +33,7 @@ import HomeLoanPage from "./pages/HomeLoanPage";
 import SportsScorePage from "./pages/SportsScorePage";
 import NotFound from "./pages/NotFound";
 import VoiceRecorderPage from "./pages/VoiceRecorderPage";
-import ChartMakerPage from "./pages/ChartMakerpage";
+import ChartMakerPage from "./pages/ChartMakerPage";
 
 const queryClient = new QueryClient();
 

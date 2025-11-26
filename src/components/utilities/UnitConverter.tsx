@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -18,11 +18,20 @@ const conversions = {
     pounds: 2.20462,
     ounces: 35.274,
   },
-  temperature: {
-    celsius: (value: number) => value,
-    fahrenheit: (value: number) => (value * 9) / 5 + 32,
-    kelvin: (value: number) => value + 273.15,
-  },
+  temperature: {},
+};
+
+// Temperature convert helpers
+const convertTemperature = (value: number, from: string, to: string) => {
+  let celsius = value;
+
+  if (from === "fahrenheit") celsius = ((value - 32) * 5) / 9;
+  if (from === "kelvin") celsius = value - 273.15;
+
+  if (to === "fahrenheit") return (celsius * 9) / 5 + 32;
+  if (to === "kelvin") return celsius + 273.15;
+
+  return celsius;
 };
 
 const UnitConverter = () => {
@@ -32,39 +41,71 @@ const UnitConverter = () => {
   const [fromValue, setFromValue] = useState("1");
   const [toValue, setToValue] = useState("");
 
-  const convert = (value: string) => {
-    const num = parseFloat(value);
+  const convert = (val: string, fUnit = fromUnit, tUnit = toUnit) => {
+    const num = parseFloat(val);
     if (isNaN(num)) {
       setToValue("");
       return;
     }
 
+    // Temperature conversion
     if (category === "temperature") {
-      const temp = conversions.temperature;
-      let celsius = num;
-      if (fromUnit === "fahrenheit") celsius = ((num - 32) * 5) / 9;
-      if (fromUnit === "kelvin") celsius = num - 273.15;
-
-      let result = celsius;
-      if (toUnit === "fahrenheit") result = temp.fahrenheit(celsius);
-      if (toUnit === "kelvin") result = temp.kelvin(celsius);
+      const result = convertTemperature(num, fUnit, tUnit);
       setToValue(result.toFixed(2));
-    } else {
-      const rates = conversions[category] as Record<string, number>;
-      const inBase = num / rates[fromUnit];
-      const result = inBase * rates[toUnit];
-      setToValue(result.toFixed(6));
+      return;
     }
+
+    // Normal conversion
+    const rates = conversions[category] as Record<string, number>;
+    const inBase = num / rates[fUnit];
+    const result = inBase * rates[tUnit];
+    setToValue(result.toFixed(6));
   };
 
-  const handleFromValueChange = (value: string) => {
-    setFromValue(value);
-    convert(value);
+  // Swap units + values
+  const handleSwap = () => {
+    const newFromUnit = toUnit;
+    const newToUnit = fromUnit;
+
+    const newFromValue = toValue;
+    const newToValue = fromValue;
+
+    setFromUnit(newFromUnit);
+    setToUnit(newToUnit);
+
+    setFromValue(newFromValue);
+    setToValue(newToValue);
+
+    if (newFromValue) convert(newFromValue, newFromUnit, newToUnit);
   };
 
-  const units = Object.keys(
-    category === "temperature" ? conversions.temperature : conversions[category]
-  ).filter((key) => typeof (conversions[category] as any)[key] !== "function");
+  // Auto convert when units change
+  useEffect(() => {
+    convert(fromValue);
+  }, [fromUnit, toUnit]);
+
+  // Reset when switching category
+  useEffect(() => {
+    if (category === "length") {
+      setFromUnit("meters");
+      setToUnit("kilometers");
+    }
+    if (category === "weight") {
+      setFromUnit("kilograms");
+      setToUnit("grams");
+    }
+    if (category === "temperature") {
+      setFromUnit("celsius");
+      setToUnit("fahrenheit");
+    }
+    setFromValue("1");
+    setToValue("");
+  }, [category]);
+
+  const units =
+    category === "temperature"
+      ? ["celsius", "fahrenheit", "kelvin"]
+      : Object.keys(conversions[category]);
 
   return (
     <div className="space-y-6">
@@ -72,11 +113,9 @@ const UnitConverter = () => {
         <Label>Category</Label>
         <Select
           value={category}
-          onValueChange={(value) => {
-            setCategory(value as keyof typeof conversions);
-            setFromValue("1");
-            setToValue("");
-          }}
+          onValueChange={(value) =>
+            setCategory(value as keyof typeof conversions)
+          }
         >
           <SelectTrigger className="bg-muted/50">
             <SelectValue />
@@ -89,25 +128,35 @@ const UnitConverter = () => {
         </Select>
       </div>
 
-      <div className="grid gap-4">
+      <div className="grid gap-6">
+        {/* FROM SECTION */}
         <div className="space-y-2">
           <Label>From</Label>
           <div className="flex gap-2">
             <Input
               type="number"
               value={fromValue}
-              onChange={(e) => handleFromValueChange(e.target.value)}
+              onChange={(e) => {
+                setFromValue(e.target.value);
+                convert(e.target.value);
+              }}
               placeholder="0"
               className="flex-1 bg-muted/50"
             />
-            <Select value={fromUnit} onValueChange={setFromUnit}>
+            <Select
+              value={fromUnit}
+              onValueChange={(val) => {
+                setFromUnit(val);
+                convert(fromValue, val, toUnit);
+              }}
+            >
               <SelectTrigger className="w-[140px] bg-muted/50">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {units.map((unit) => (
-                  <SelectItem key={unit} value={unit}>
-                    {unit}
+                  <SelectItem value={unit} key={unit}>
+                    {unit.charAt(0).toUpperCase() + unit.slice(1)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -115,12 +164,17 @@ const UnitConverter = () => {
           </div>
         </div>
 
+        {/* SWAP BUTTON */}
         <div className="flex justify-center">
-          <div className="p-2 rounded-full bg-primary/10">
-            <ArrowLeftRight className="w-5 h-5 text-primary" />
-          </div>
+          <button
+            onClick={handleSwap}
+            className="p-3 rounded-full bg-primary/10 hover:bg-primary/20 transition"
+          >
+            <ArrowLeftRight className="w-6 h-6 text-primary" />
+          </button>
         </div>
 
+        {/* TO SECTION */}
         <div className="space-y-2">
           <Label>To</Label>
           <div className="flex gap-2">
@@ -128,17 +182,22 @@ const UnitConverter = () => {
               type="number"
               value={toValue}
               readOnly
-              placeholder="0"
               className="flex-1 bg-muted/50"
             />
-            <Select value={toUnit} onValueChange={setToUnit}>
+            <Select
+              value={toUnit}
+              onValueChange={(val) => {
+                setToUnit(val);
+                convert(fromValue, fromUnit, val);
+              }}
+            >
               <SelectTrigger className="w-[140px] bg-muted/50">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {units.map((unit) => (
-                  <SelectItem key={unit} value={unit}>
-                    {unit}
+                  <SelectItem value={unit} key={unit}>
+                    {unit.charAt(0).toUpperCase() + unit.slice(1)}
                   </SelectItem>
                 ))}
               </SelectContent>
