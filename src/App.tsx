@@ -33,6 +33,7 @@ import HomeLoanPage from "./pages/HomeLoanPage";
 import SportsScorePage from "./pages/SportsScorePage";
 import NotFound from "./pages/NotFound";
 import VoiceRecorderPage from "./pages/VoiceRecorderPage";
+import ChartMakerPage from "./pages/ChartMakerpage";
 
 const queryClient = new QueryClient();
 
@@ -54,6 +55,7 @@ const App = () => (
           <Route path="/calculator" element={<CalculatorPage />} />
           <Route path="/calendar" element={<CalendarPage />} />
           <Route path="/compound-interest" element={<CompoundInterestPage />} />
+          <Route path="/chart-maker" element={<ChartMakerPage />} />
           <Route path="/json-formatter" element={<JSONFormatterPage />} />
           <Route path="/compass" element={<CompassPage />} />
           <Route path="/markdown-converter" element={<MarkdownConverterPage />} />
