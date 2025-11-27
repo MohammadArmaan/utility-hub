@@ -42,6 +42,7 @@ import RandomDataGeneratorPage from "./pages/RandomDataGeneratorPage";
 import HashGeneratorPage from "./pages/HashGeneratorPage";
 import RegexMakerPage from "./pages/RegexMakerPage";
 import GradientGeneratorPage from "./pages/GradientGeneratorPage";
+import ClipboardManagerPage from "./pages/ClipboardManagerPage";
 
 const queryClient = new QueryClient();
 
@@ -62,6 +63,7 @@ const App = () => (
           <Route path="/currency-converter" element={<CurrencyConverterPage />} />
           <Route path="/calculator" element={<CalculatorPage />} />
           <Route path="/all-in-one-calculator" element={<AllCalculatorsPage />} />
+          <Route path="/clipboard-manager" element={<ClipboardManagerPage />} />
           <Route path="/uuid-generator" element={<UUIDGeneratorPage />} />
           <Route path="/json-to-ts" element={<JSONToTSGeneratorPage />} />
           <Route path="/jwt-tool" element={<JWTToolPage />} />

@@ -38,6 +38,7 @@ import {
     Fingerprint,
     SquareAsterisk,
     Hash,
+    Copy,
 } from "lucide-react";
 
 const Index = () => {
@@ -239,7 +240,14 @@ const Index = () => {
                 to: "/all-in-one-calculator",
                 category: "calculator",
             },
-
+            {
+                title: "Clipboard Manager",
+                description:
+                    "Save, search and reuse your clipboard history with one click",
+                icon: Copy,
+                to: "/clipboard-manager",
+                category: "productivity",
+            },
             {
                 title: "Music Player",
                 description: "Play audio files with playlist support",
