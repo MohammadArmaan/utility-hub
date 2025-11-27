@@ -9,8 +9,8 @@ import { toast } from "sonner";
 
 const QRCodeGenerator = () => {
   const [text, setText] = useState("https://utility-hub-project.vercel.app");
-  const [color, setColor] = useState("#22d3ee");
-  const [bgColor, setBgColor] = useState("#1a1f2e");
+  const [color, setColor] = useState("#ffffff");
+  const [bgColor, setBgColor] = useState("#000000");
   const [size, setSize] = useState(256);
   const [logo, setLogo] = useState<string | null>(null);
   const [dotStyle, setDotStyle] = useState<"squares" | "dots" | "rounded">("squares");
