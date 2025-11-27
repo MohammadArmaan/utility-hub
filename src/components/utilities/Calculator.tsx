@@ -100,7 +100,7 @@ const Calculator = () => {
 
   const buttonClass =
     "h-16 text-lg font-semibold transition-all hover:scale-105 active:scale-95";
-  const numberButtonClass = `${buttonClass} bg-muted hover:bg-muted/80`;
+  const numberButtonClass = `${buttonClass} bg-muted hover:bg-muted/80 text-white`;
   const operationButtonClass = `${buttonClass} bg-primary hover:bg-primary/90 text-primary-foreground`;
   const equalsButtonClass = `${buttonClass} bg-accent hover:bg-accent/90 text-accent-foreground`;
 

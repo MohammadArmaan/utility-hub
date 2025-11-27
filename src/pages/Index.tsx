@@ -33,6 +33,11 @@ import {
     Search,
     Mic,
     ChartArea,
+    CodeSquare,
+    Sparkles,
+    Fingerprint,
+    SquareAsterisk,
+    Hash,
 } from "lucide-react";
 
 const Index = () => {
@@ -41,14 +46,20 @@ const Index = () => {
     /* --------------------------
      Categorized utilities list
      -------------------------- */
-    const { fileTools, productivityTools, mediaDeviceTools } = useMemo(() => {
+    const {
+        fileTools,
+        productivityTools,
+        mediaDeviceTools,
+        developerTools,
+        calculatorTools,
+    } = useMemo(() => {
         const all = [
             {
                 title: "Base64 Encoder/Decoder",
                 description: "Encode and decode Base64 strings",
                 icon: Binary,
                 to: "/base64",
-                category: "file",
+                category: "developer",
             },
             {
                 title: "File Compressor",
@@ -80,11 +91,18 @@ const Index = () => {
             },
 
             {
-                title: "Calculator",
+                title: "Basic Calculator",
                 description: "Perform basic arithmetic calculations",
                 icon: Calculator,
                 to: "/calculator",
-                category: "productivity",
+                category: "calculator",
+            },
+            {
+                title: "UUID Generator",
+                description: "Generate secure UUID v4 and v5 identifiers",
+                icon: Binary,
+                to: "/uuid-generator",
+                category: "developer",
             },
             {
                 title: "Calendar",
@@ -98,21 +116,59 @@ const Index = () => {
                 description: "Format validate and convert JSON data",
                 icon: Braces,
                 to: "/json-formatter",
-                category: "productivity",
+                category: "developer",
             },
             {
                 title: "Markdown Converter",
                 description: "Convert Markdown to HTML",
                 icon: FileText,
                 to: "/markdown-converter",
-                category: "productivity",
+                category: "developer",
             },
+            {
+                title: "JSON → TypeScript",
+                description:
+                    "Convert JSON into TypeScript interfaces and objects",
+                icon: CodeSquare,
+                to: "/json-to-ts",
+                category: "developer",
+            },
+            {
+                title: "JWT Encoder/Decoder",
+                description: "Create, decode, and verify JWT tokens instantly",
+                icon: Lock,
+                to: "/jwt-tool",
+                category: "developer",
+            },
+            {
+                title: "Random Data Generator",
+                description:
+                    "Generate sample user data as JSON, CSV, or objects",
+                icon: Sparkles,
+                to: "/random-data",
+                category: "developer",
+            },
+            {
+                title: "Hash Generator",
+                description: "Generate SHA-256, MD5, Keccak and RIPEMD hashes",
+                icon: Fingerprint,
+                to: "/hash-generator",
+                category: "developer",
+            },
+            {
+                title: "Regex Maker & Tester",
+                description: "Create and test Regular Expressions instantly",
+                icon: SquareAsterisk,
+                to: "/regex-maker",
+                category: "developer",
+            },
+
             {
                 title: "Home Loan Calculator",
                 description: "Calculate home loan EMI and payment details",
                 icon: Home,
                 to: "/home-loan",
-                category: "productivity",
+                category: "calculator",
             },
             {
                 title: "Interest Calculator",
@@ -120,7 +176,7 @@ const Index = () => {
                     "Calculate intrest growth for simple and compound interest",
                 icon: TrendingUp,
                 to: "/compound-interest",
-                category: "productivity",
+                category: "calculator",
             },
             {
                 title: "Currency Converter",
@@ -142,8 +198,24 @@ const Index = () => {
                 description: "Create strong, secure passwords instantly",
                 icon: Lock,
                 to: "/password-generator",
-                category: "productivity",
+                category: "developer",
             },
+            {
+                title: "Color Pallete Generator",
+                description: "Generate a color pallete for you",
+                icon: Palette,
+                to: "/color-palette",
+                category: "developer",
+            },
+            {
+                title: "Gradient Generator",
+                description:
+                    "Design linear, radial & conic gradients — Tailwind-ready CSS and class output",
+                icon: Palette,
+                to: "/gradient-generator",
+                category: "developer",
+            },
+
             {
                 title: "QR Code Generator",
                 description:
@@ -154,11 +226,18 @@ const Index = () => {
             },
             {
                 title: "Chart Maker",
-                description:
-                    "Create stunning charts for your analysis",
+                description: "Create stunning charts for your analysis",
                 icon: ChartArea,
                 to: "/chart-maker",
                 category: "productivity",
+            },
+            {
+                title: "All in One Calculator",
+                description:
+                    "Perform multiple calculations in one place — BMI, age, EMI, GST and more",
+                icon: Calculator,
+                to: "/all-in-one-calculator",
+                category: "calculator",
             },
 
             {
@@ -250,6 +329,8 @@ const Index = () => {
             mediaDeviceTools: all.filter(
                 (u) => u.category === "media" || u.category === "device"
             ),
+            developerTools: all.filter((u) => u.category === "developer"),
+            calculatorTools: all.filter((u) => u.category === "calculator"),
         };
     }, []);
 
@@ -268,10 +349,6 @@ const Index = () => {
             })
             .sort((a, b) => a.title.localeCompare(b.title));
 
-    const visibleFileTools = useMemo(
-        () => filter(fileTools),
-        [fileTools, searchQuery]
-    );
     const visibleProductivityTools = useMemo(
         () => filter(productivityTools),
         [productivityTools, searchQuery]
@@ -279,6 +356,18 @@ const Index = () => {
     const visibleMediaDeviceTools = useMemo(
         () => filter(mediaDeviceTools),
         [mediaDeviceTools, searchQuery]
+    );
+    const visbleDeveloperTools = useMemo(
+        () => filter(developerTools),
+        [developerTools, searchQuery]
+    );
+    const visbleCalculatorTools = useMemo(
+        () => filter(calculatorTools),
+        [calculatorTools, searchQuery]
+    );
+    const visibleFileTools = useMemo(
+        () => filter(fileTools),
+        [fileTools, searchQuery]
     );
 
     return (
@@ -341,6 +430,54 @@ const Index = () => {
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {visibleMediaDeviceTools.map((utility) => (
+                                <NavigationCard
+                                    key={utility.to}
+                                    title={utility.title}
+                                    description={utility.description}
+                                    icon={utility.icon}
+                                    to={utility.to}
+                                />
+                            ))}
+                        </div>
+                    )}
+                </section>
+
+                {/* DEVELOPER TOOLS */}
+                <section className="mb-20">
+                    <h3 className="text-2xl font-semibold mb-4 border-l-4 border-primary p-2">
+                        Developer Tools
+                    </h3>
+                    {visbleDeveloperTools.length === 0 ? (
+                        <p className="text-sm text-muted-foreground mb-4">
+                            No developer tools match your search.
+                        </p>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {visbleDeveloperTools.map((utility) => (
+                                <NavigationCard
+                                    key={utility.to}
+                                    title={utility.title}
+                                    description={utility.description}
+                                    icon={utility.icon}
+                                    to={utility.to}
+                                />
+                            ))}
+                        </div>
+                    )}
+                </section>
+
+                {/* CALCULATOR TOOLS */}
+                <section className="mb-20">
+                    <h3 className="text-2xl font-semibold mb-4 border-l-4 border-primary p-2">
+                        Calculator Tools
+                    </h3>
+                    {visbleDeveloperTools.length === 0 ? (
+                        <p className="text-sm text-muted-foreground mb-4">
+                            No calculator tools match your search.
+                        </p>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {visbleCalculatorTools.map((utility) => (
                                 <NavigationCard
                                     key={utility.to}
                                     title={utility.title}

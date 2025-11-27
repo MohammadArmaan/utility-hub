@@ -34,6 +34,14 @@ import SportsScorePage from "./pages/SportsScorePage";
 import NotFound from "./pages/NotFound";
 import VoiceRecorderPage from "./pages/VoiceRecorderPage";
 import ChartMakerPage from "./pages/ChartMakerPage";
+import AllCalculatorsPage from "./pages/AllCalculatorsPage";
+import UUIDGeneratorPage from "./pages/UUIDGeneratorPage";
+import JSONToTSGeneratorPage from "./pages/JSONToTSGeneratorPage";
+import JWTToolPage from "./pages/JWTToolPage";
+import RandomDataGeneratorPage from "./pages/RandomDataGeneratorPage";
+import HashGeneratorPage from "./pages/HashGeneratorPage";
+import RegexMakerPage from "./pages/RegexMakerPage";
+import GradientGeneratorPage from "./pages/GradientGeneratorPage";
 
 const queryClient = new QueryClient();
 
@@ -53,13 +61,21 @@ const App = () => (
           <Route path="/unit-converter" element={<UnitConverterPage />} />
           <Route path="/currency-converter" element={<CurrencyConverterPage />} />
           <Route path="/calculator" element={<CalculatorPage />} />
+          <Route path="/all-in-one-calculator" element={<AllCalculatorsPage />} />
+          <Route path="/uuid-generator" element={<UUIDGeneratorPage />} />
+          <Route path="/json-to-ts" element={<JSONToTSGeneratorPage />} />
+          <Route path="/jwt-tool" element={<JWTToolPage />} />
+          <Route path="/random-data" element={<RandomDataGeneratorPage />} />
           <Route path="/calendar" element={<CalendarPage />} />
           <Route path="/compound-interest" element={<CompoundInterestPage />} />
           <Route path="/chart-maker" element={<ChartMakerPage />} />
           <Route path="/json-formatter" element={<JSONFormatterPage />} />
+          <Route path="/hash-generator" element={<HashGeneratorPage />} />
+          <Route path="/regex-maker" element={<RegexMakerPage />} />
           <Route path="/compass" element={<CompassPage />} />
           <Route path="/markdown-converter" element={<MarkdownConverterPage />} />
           <Route path="/color-palette" element={<ColorPalettePage />} />
+          <Route path="/gradient-generator" element={<GradientGeneratorPage />} />
           <Route path="/base64" element={<Base64Page />} />
           <Route path="/music-player" element={<MusicPlayerPage />} />
           <Route path="/video-player" element={<VideoPlayerPage />} />
