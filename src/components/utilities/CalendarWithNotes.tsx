@@ -7,7 +7,7 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
-import { CalendarDays, Plus } from "lucide-react";
+    import { CalendarDays, Plus, Trash } from "lucide-react";
 import {
     Dialog,
     DialogContent,
@@ -64,24 +64,24 @@ export default function CalendarWithNotes() {
     const [noteDialogOpen, setNoteDialogOpen] = useState(false);
     const [noteText, setNoteText] = useState("");
 
-    // Load notes from sessionStorage on mount
+    // Load notes on mount
     useEffect(() => {
         const stored = sessionStorage.getItem("calendarNotes");
         if (stored) {
             try {
                 setNotes(JSON.parse(stored));
-            } catch (e) {
-                console.error("Failed to parse notes:", e);
+            } catch {
+                console.error("Failed to parse notes");
             }
         }
     }, []);
 
-    // Save notes to sessionStorage
-    const saveNotesToStorage = (updatedNotes: Record<string, string>) => {
-        sessionStorage.setItem("calendarNotes", JSON.stringify(updatedNotes));
+    // Save notes to storage
+    const saveNotesToStorage = (updated: Record<string, string>) => {
+        sessionStorage.setItem("calendarNotes", JSON.stringify(updated));
     };
 
-    // Open dialog & load existing note
+    // Open note dialog
     const openNoteDialog = (selectedDate: Date) => {
         setDate(selectedDate);
         const key = selectedDate.toDateString();
@@ -93,18 +93,27 @@ export default function CalendarWithNotes() {
     const handleSaveNote = () => {
         if (!date) return;
         const key = date.toDateString();
+        const updated = { ...notes, [key]: noteText.trim() };
 
-        const updatedNotes = {
-            ...notes,
-            [key]: noteText.trim(),
-        };
-
-        setNotes(updatedNotes);
-        saveNotesToStorage(updatedNotes);
+        setNotes(updated);
+        saveNotesToStorage(updated);
         setNoteDialogOpen(false);
     };
 
-    // Custom day renderer
+    // Delete note
+    const handleDeleteNote = () => {
+        if (!date) return;
+        const key = date.toDateString();
+
+        const updated = { ...notes };
+        delete updated[key];
+
+        setNotes(updated);
+        saveNotesToStorage(updated);
+        setNoteDialogOpen(false);
+    };
+
+    // Custom calendar day
     const customDayContent = (day: Date) => {
         const key = day.toDateString();
         const hasNote = !!notes[key];
@@ -122,9 +131,7 @@ export default function CalendarWithNotes() {
                         ? "bg-accent text-accent-foreground"
                         : ""
                 } hover:bg-accent/50`}
-                onClick={(e) => {
-                    setDate(day)
-                }}
+                onClick={() => setDate(day)}
             >
                 <div className="text-sm font-medium mb-1">{day.getDate()}</div>
 
@@ -141,8 +148,11 @@ export default function CalendarWithNotes() {
                 )}
             </div>
         );
-    };return <div>
-     <div className="max-w-4xl mx-auto">
+    };
+
+    return (
+        <div>
+            <div className="max-w-4xl mx-auto">
                 <Card className="bg-gradient-card shadow-card border-border/50">
                     <CardHeader>
                         <div className="flex items-center gap-3 mb-2">
@@ -152,8 +162,7 @@ export default function CalendarWithNotes() {
                             <CardTitle className="text-2xl">Calendar</CardTitle>
                         </div>
                         <CardDescription>
-                            Add & view notes for any date. Today's date is
-                            highlighted.
+                            Add, edit & delete notes for any date.
                         </CardDescription>
                     </CardHeader>
 
@@ -181,21 +190,18 @@ export default function CalendarWithNotes() {
 
                                         table: "w-full border-collapse",
 
-                                        /* HEADER ROW WITH FULL COLUMN BORDERS */
                                         head_row:
                                             "grid grid-cols-7 border-t border-l border-r border-border",
                                         head_cell:
                                             "text-muted-foreground text-center font-medium py-2 border-b border-r border-border last:border-r-0",
 
-                                        /* WEEK ROWS WITH FULL COLUMN BORDERS */
                                         row: "grid grid-cols-7 border-l border-r border-border",
 
-                                        /* EACH CELL HAS TOP + RIGHT BORDER (LEFT BORDER inherited from row) */
                                         cell: "relative p-0 text-center text-sm h-24 flex items-start justify-start border-t border-r border-border last:border-r-0",
 
                                         day: "h-full w-full p-0 font-normal aria-selected:opacity-100",
                                         day_selected:
-                                            "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+                                            "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground",
                                         day_today:
                                             "bg-accent text-accent-foreground",
                                         day_outside: "opacity-50",
@@ -231,16 +237,27 @@ export default function CalendarWithNotes() {
                                         </div>
                                     )}
 
-                                    <Button
-                                        variant="outline"
-                                        className="mt-3"
-                                        onClick={() => openNoteDialog(date)}
-                                    >
-                                        <Plus className="w-4 h-4 mr-1" />
-                                        {notes[date.toDateString()]
-                                            ? "Edit Note"
-                                            : "Add Note"}
-                                    </Button>
+                                    <div className="flex gap-2 mt-3">
+                                        <Button
+                                            variant="outline"
+                                            onClick={() => openNoteDialog(date)}
+                                        >
+                                            <Plus className="w-4 h-4 mr-1" />
+                                            {notes[date.toDateString()]
+                                                ? "Edit Note"
+                                                : "Add Note"}
+                                        </Button>
+
+                                        {notes[date.toDateString()] && (
+                                            <Button
+                                                variant="destructive"
+                                                onClick={handleDeleteNote}
+                                            >
+                                                <Trash className="w-4 h-4 mr-1" />
+                                                <span className="hidden sm:inline-block">Delete Note</span>
+                                            </Button>
+                                        )}
+                                    </div>
                                 </div>
                             )}
                         </div>
@@ -275,18 +292,32 @@ export default function CalendarWithNotes() {
                             />
                         </div>
 
-                        <div className="flex justify-end gap-2">
-                            <Button
-                                variant="outline"
-                                onClick={() => setNoteDialogOpen(false)}
-                            >
-                                Cancel
-                            </Button>
-                            <Button onClick={handleSaveNote}>Save Note</Button>
+                        <div className="flex justify-between gap-2">
+                            {notes[date?.toDateString() || ""] && (
+                                <Button
+                                    variant="destructive"
+                                    onClick={handleDeleteNote}
+                                >
+                                    <Trash className="w-4 h-4 mr-1" />
+                                    Delete
+                                </Button>
+                            )}
+
+                            <div className="flex gap-2 ml-auto">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setNoteDialogOpen(false)}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button onClick={handleSaveNote}>
+                                    Save Note
+                                </Button>
+                            </div>
                         </div>
                     </div>
                 </DialogContent>
             </Dialog>
-            
-</div>
+        </div>
+    );
 }
