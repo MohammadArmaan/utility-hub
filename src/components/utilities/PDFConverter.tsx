@@ -3,8 +3,22 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileDown, ImagePlus, FileText, Copy, Loader2, Trash2, X } from "lucide-react";
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
+import {
+    FileDown,
+    ImagePlus,
+    FileText,
+    Copy,
+    Loader2,
+    Trash2,
+    X,
+} from "lucide-react";
 import { toast } from "sonner";
 
 const PDFConverter = () => {
@@ -18,13 +32,13 @@ const PDFConverter = () => {
     const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
         if (files.length === 0) return;
-        
-        setImages(prev => [...prev, ...files]);
+
+        setImages((prev) => [...prev, ...files]);
         toast.success(`${files.length} image(s) added`);
     };
 
     const removeImage = (index: number) => {
-        setImages(prev => prev.filter((_, i) => i !== index));
+        setImages((prev) => prev.filter((_, i) => i !== index));
     };
 
     const convertMultipleImagesToPDF = async () => {
@@ -41,9 +55,9 @@ const PDFConverter = () => {
             for (let i = 0; i < images.length; i++) {
                 const file = images[i];
                 const imageData = await readFileAsDataURL(file);
-                
+
                 const img = await loadImage(imageData);
-                
+
                 if (i > 0) {
                     doc.addPage();
                 }
@@ -98,7 +112,53 @@ const PDFConverter = () => {
         });
     };
 
-    // Text to PDF
+    // Detect if input likely contains Markdown
+    const isMarkdown = (text: string): boolean => {
+        const mdPatterns = [
+            /^#{1,6}\s+/m, // headings
+            /\*\*(.*?)\*\*/m, // bold
+            /\*(.*?)\*/m, // italic
+            /`{1,3}[^`]+`{1,3}/m, // code / code-block
+            /^[-*+]\s+/m, // list items
+            /\[(.*?)\]\((.*?)\)/m, // links
+        ];
+        return mdPatterns.some((pattern) => pattern.test(text));
+    };
+
+    // Convert Markdown → Clean Plain Text for PDF
+    const markdownToPlainText = (md: string): string => {
+        let txt = md;
+
+        // 1. Replace headings (#, ##, ###)
+        txt = txt.replace(/^#{1,6}\s*(.*)$/gm, (_, g) => g.toUpperCase());
+
+        // 2. Bold & Italic → remove ** and *
+        txt = txt.replace(/\*\*(.*?)\*\*/g, "$1");
+        txt = txt.replace(/\*(.*?)\*/g, "$1");
+
+        // 3. Inline code `code`
+        txt = txt.replace(/`(.*?)`/g, "$1");
+
+        // 4. Code blocks
+        txt = txt.replace(/```([\s\S]*?)```/g, (_, g) => g);
+
+        // 5. Turn markdown lists into bullet lists
+        txt = txt.replace(/^[-*+]\s+(.*)$/gm, "• $1");
+
+        // 6. Numbered lists keep as-is
+        txt = txt.replace(/^\d+\.\s+(.*)$/gm, "$1");
+
+        // 7. Remove link markdown [text](url)
+        txt = txt.replace(/\[(.*?)\]\((.*?)\)/g, "$1");
+
+        // 8. Preserve multiple spaces
+        txt = txt.replace(/ {2,}/g, (match) => " ".repeat(match.length));
+
+        // 9. Preserve blank lines (do nothing)
+
+        return txt.trim();
+    };
+
     const convertTextToPDF = async () => {
         if (!text.trim()) {
             toast.error("Please enter some text first");
@@ -108,28 +168,38 @@ const PDFConverter = () => {
         try {
             setIsProcessing(true);
             const { jsPDF } = await import("jspdf");
-            const doc = new jsPDF();
 
+            // --- Check if text contains markdown ---
+            const finalText = isMarkdown(text)
+                ? markdownToPlainText(text) // <-- convert markdown to clean plain text
+                : text;
+
+            // -------- PLAIN TEXT → PDF --------
+            const doc = new jsPDF();
+            const marginTop = 20;
+            const marginBottom = 20;
             const pageWidth = doc.internal.pageSize.getWidth();
             const pageHeight = doc.internal.pageSize.getHeight();
-            const margin = 20;
-            const maxWidth = pageWidth - 2 * margin;
+            const maxWidth = pageWidth - 40; // left 20 + right 20
 
-            const lines = doc.splitTextToSize(text, maxWidth);
-            let y = margin;
+            // Split long plain text into wrapped lines
+            const lines = doc.splitTextToSize(finalText, maxWidth);
+            let y = marginTop;
 
-            lines.forEach((line: string) => {
-                if (y > pageHeight - margin) {
+            lines.forEach((line) => {
+                if (y > pageHeight - marginBottom) {
                     doc.addPage();
-                    y = margin;
+                    y = marginTop;
                 }
-                doc.text(line, margin, y);
+
+                doc.text(line, 20, y);
                 y += 7;
             });
 
             doc.save("text-document.pdf");
             toast.success("PDF created successfully!");
         } catch (error) {
+            console.error(error);
             toast.error("Failed to create PDF");
         } finally {
             setIsProcessing(false);
@@ -148,9 +218,9 @@ const PDFConverter = () => {
                 // For DOCX/PPTX, we'll convert to viewable HTML and trigger print
                 const mammoth = await import("mammoth");
                 const arrayBuffer = await file.arrayBuffer();
-                
+
                 let htmlContent = "";
-                
+
                 if (file.name.endsWith(".docx")) {
                     const result = await mammoth.convertToHtml({ arrayBuffer });
                     htmlContent = result.value;
@@ -174,7 +244,7 @@ const PDFConverter = () => {
                 }
 
                 // Open in new window and trigger print dialog
-                const printWindow = window.open('', '_blank');
+                const printWindow = window.open("", "_blank");
                 if (printWindow) {
                     printWindow.document.write(`
                         <!DOCTYPE html>
@@ -186,7 +256,7 @@ const PDFConverter = () => {
                                     font-family: Arial, sans-serif; 
                                     padding: 20px;
                                     max-width: 800px;
-                                    margin: 0 auto;
+                                    margin: 20px, auto;
                                 }
                                 @media print {
                                     body { padding: 0; }
@@ -206,7 +276,9 @@ const PDFConverter = () => {
                         </html>
                     `);
                     printWindow.document.close();
-                    toast.success("Print dialog opened! Select 'Save as PDF' from printer options.");
+                    toast.success(
+                        "Print dialog opened! Select 'Save as PDF' from printer options."
+                    );
                 }
             } else if (file.name.endsWith(".txt")) {
                 const textContent = await file.text();
@@ -260,7 +332,9 @@ const PDFConverter = () => {
     };
 
     // PDF to Images (All Pages)
-    const convertPDFToImages = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const convertPDFToImages = async (
+        e: React.ChangeEvent<HTMLInputElement>
+    ) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
@@ -333,7 +407,7 @@ const PDFConverter = () => {
 
         try {
             setIsProcessing(true);
-            
+
             // Extract text from PDF
             const pdfjs = await import("pdfjs-dist");
             pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
@@ -357,16 +431,21 @@ const PDFConverter = () => {
             }
 
             // Create DOCX
-            const { Document, Packer, Paragraph, TextRun } = await import("docx");
-            
+            const { Document, Packer, Paragraph, TextRun } = await import(
+                "docx"
+            );
+
             const doc = new Document({
-                sections: [{
-                    children: fullText.split('\n').map(line => 
-                        new Paragraph({
-                            children: [new TextRun(line)],
-                        })
-                    ),
-                }],
+                sections: [
+                    {
+                        children: fullText.split("\n").map(
+                            (line) =>
+                                new Paragraph({
+                                    children: [new TextRun(line)],
+                                })
+                        ),
+                    },
+                ],
             });
 
             const blob = await Packer.toBlob(doc);
@@ -377,7 +456,9 @@ const PDFConverter = () => {
             a.click();
             URL.revokeObjectURL(url);
 
-            toast.success("PDF converted to DOCX! (Note: Formatting may not be preserved)");
+            toast.success(
+                "PDF converted to DOCX! (Note: Formatting may not be preserved)"
+            );
         } catch (error) {
             toast.error("Failed to convert PDF to DOCX");
             console.error(error);
@@ -405,7 +486,9 @@ const PDFConverter = () => {
                     {/* Text to PDF */}
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-lg">Text to PDF</CardTitle>
+                            <CardTitle className="text-lg">
+                                Text to PDF
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-3">
                             <Textarea
@@ -432,8 +515,12 @@ const PDFConverter = () => {
                     {/* Multiple Images to PDF */}
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-lg">Images to PDF</CardTitle>
-                            <CardDescription>Select multiple images - each will be a page</CardDescription>
+                            <CardTitle className="text-lg">
+                                Images to PDF
+                            </CardTitle>
+                            <CardDescription>
+                                Select multiple images - each will be a page
+                            </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-3">
                             <input
@@ -463,12 +550,19 @@ const PDFConverter = () => {
                                 <div className="space-y-2">
                                     <div className="max-h-40 overflow-y-auto space-y-1">
                                         {images.map((img, idx) => (
-                                            <div key={idx} className="flex items-center justify-between p-2 bg-muted/50 rounded text-sm">
-                                                <span className="truncate flex-1">{img.name}</span>
+                                            <div
+                                                key={idx}
+                                                className="flex items-center justify-between p-2 bg-muted/50 rounded text-sm"
+                                            >
+                                                <span className="truncate flex-1">
+                                                    {img.name}
+                                                </span>
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
-                                                    onClick={() => removeImage(idx)}
+                                                    onClick={() =>
+                                                        removeImage(idx)
+                                                    }
                                                     className="h-6 w-6 p-0"
                                                 >
                                                     <X className="w-4 h-4" />
@@ -491,8 +585,12 @@ const PDFConverter = () => {
                     {/* Documents to PDF */}
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-lg">Document to PDF</CardTitle>
-                            <CardDescription>Word (.docx), PowerPoint (.pptx), Text (.txt)</CardDescription>
+                            <CardTitle className="text-lg">
+                                Document to PDF
+                            </CardTitle>
+                            <CardDescription>
+                                Word (.docx), PowerPoint (.pptx), Text (.txt)
+                            </CardDescription>
                         </CardHeader>
                         <CardContent>
                             <input
@@ -528,8 +626,12 @@ const PDFConverter = () => {
                     {/* PDF to Text */}
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-lg">PDF to Text</CardTitle>
-                            <CardDescription>Extract text content from PDF</CardDescription>
+                            <CardTitle className="text-lg">
+                                PDF to Text
+                            </CardTitle>
+                            <CardDescription>
+                                Extract text content from PDF
+                            </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-3">
                             <input
@@ -562,7 +664,11 @@ const PDFConverter = () => {
                                 <div className="space-y-2">
                                     <div className="flex items-center justify-between">
                                         <Label>Extracted Text</Label>
-                                        <Button variant="ghost" size="sm" onClick={copyToClipboard}>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={copyToClipboard}
+                                        >
                                             <Copy className="w-4 h-4 mr-1" />
                                             Copy
                                         </Button>
@@ -580,8 +686,12 @@ const PDFConverter = () => {
                     {/* PDF to Images */}
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-lg">PDF to Images</CardTitle>
-                            <CardDescription>Convert all pages to PNG images</CardDescription>
+                            <CardTitle className="text-lg">
+                                PDF to Images
+                            </CardTitle>
+                            <CardDescription>
+                                Convert all pages to PNG images
+                            </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-3">
                             <input
@@ -609,19 +719,37 @@ const PDFConverter = () => {
                             {pdfPages.length > 0 && (
                                 <div className="space-y-3">
                                     <div className="flex items-center justify-between">
-                                        <Label>{pdfPages.length} page(s) converted</Label>
-                                        <Button variant="outline" size="sm" onClick={downloadAllImages}>
+                                        <Label>
+                                            {pdfPages.length} page(s) converted
+                                        </Label>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={downloadAllImages}
+                                        >
                                             Download All
                                         </Button>
                                     </div>
                                     <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto">
                                         {pdfPages.map((imgData, idx) => (
-                                            <div key={idx} className="relative group">
-                                                <img src={imgData} alt={`Page ${idx + 1}`} className="w-full border rounded" />
+                                            <div
+                                                key={idx}
+                                                className="relative group"
+                                            >
+                                                <img
+                                                    src={imgData}
+                                                    alt={`Page ${idx + 1}`}
+                                                    className="w-full border rounded"
+                                                />
                                                 <Button
                                                     size="sm"
                                                     className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                                                    onClick={() => downloadPageImage(imgData, idx + 1)}
+                                                    onClick={() =>
+                                                        downloadPageImage(
+                                                            imgData,
+                                                            idx + 1
+                                                        )
+                                                    }
                                                 >
                                                     <FileDown className="w-4 h-4" />
                                                 </Button>
@@ -636,8 +764,12 @@ const PDFConverter = () => {
                     {/* PDF to DOCX */}
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-lg">PDF to Word (DOCX)</CardTitle>
-                            <CardDescription>Convert PDF to editable Word document</CardDescription>
+                            <CardTitle className="text-lg">
+                                PDF to Word (DOCX)
+                            </CardTitle>
+                            <CardDescription>
+                                Convert PDF to editable Word document
+                            </CardDescription>
                         </CardHeader>
                         <CardContent>
                             <input
