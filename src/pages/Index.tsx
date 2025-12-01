@@ -40,8 +40,10 @@ import {
     Hash,
     Copy,
 } from "lucide-react";
+import { useScrollRestore } from "@/hooks/useScrollRestore";
 
 const Index = () => {
+    useScrollRestore("homepage-position");
     const [searchQuery, setSearchQuery] = useState("");
 
     /* --------------------------
